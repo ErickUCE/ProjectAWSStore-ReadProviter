@@ -1,0 +1,11 @@
+type Query {
+    getAllProviders: [Provider]
+    getProviderById(id: ID!): Provider
+}
+
+type Provider {
+    id: ID!
+    name: String!
+    address: String!
+    email: String!
+}
