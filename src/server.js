@@ -5,24 +5,29 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const sequelize = require('./config/database');
 const resolvers = require('./graphql/resolvers');
-const Provider = require('./models/provider');
+const providerRoutes = require('./routes/providerRoutes');
 
 const app = express();
 app.use(bodyParser.json());
+app.use(providerRoutes); // ✅ Registrar las rutas
 
-// Sincronizar base de datos antes de levantar servidores
+// ✅ Configurar Apollo Server con cacheo deshabilitado
+const typeDefs = fs.readFileSync(path.join(__dirname, 'graphql/schema.graphql'), 'utf-8');
+const server = new ApolloServer({
+    typeDefs,
+    resolvers,
+    cache: 'bounded', // ✅ Deshabilita cache persistente
+    introspection: true
+});
+
+// ✅ Sincronizar base de datos antes de iniciar los servidores
 sequelize.sync().then(() => {
     console.log('✅ Database synced successfully!');
-
-    // Iniciar Apollo Server (GraphQL)
-    const typeDefs = fs.readFileSync(path.join(__dirname, 'graphql/schema.graphql'), 'utf-8');
-    const server = new ApolloServer({ typeDefs, resolvers });
 
     server.listen({ port: 4003 }).then(({ url }) => {
         console.log(`🚀 GraphQL server ready at ${url}`);
     });
 
-    // Iniciar Express Server (REST)
     app.listen(5003, () => {
         console.log(`REST server listening on port 5003`);
     });
