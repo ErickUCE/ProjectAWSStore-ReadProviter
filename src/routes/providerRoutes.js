@@ -80,4 +80,17 @@ router.post('/sync-delete', async (req, res) => {
     }
 });
 
+//---------------------------------------------Connect Product------------------------------
+router.get('/providers/:id', async (req, res) => {
+    try {
+        const provider = await Provider.findByPk(req.params.id);
+        if (!provider) {
+            return res.status(404).json({ error: "Proveedor no encontrado" });
+        }
+        res.json(provider);
+    } catch (error) {
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+});
+
 module.exports = router;
