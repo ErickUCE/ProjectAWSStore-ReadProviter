@@ -1,0 +1,66 @@
+name: Deploy ReadProvider to AWS EC2
+
+on:
+  push:
+    branches:
+      - test
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 🛎️ Checkout repository
+      uses: actions/checkout@v3
+
+    - name: 🐳 Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: 📦 Build Docker image
+      run: |
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/projectawsstore-readprovider:latest .
+
+    - name: 🚀 Push Docker image to Docker Hub
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/projectawsstore-readprovider:latest
+
+    - name: 🔑 Connect to EC2 and deploy container
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.EC2_HOST_READ_PROVIDER }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          echo "✅ Iniciando despliegue en EC2..."
+
+          # Crear el archivo .env desde el secreto de GitHub
+          echo "${{ secrets.ENV_FILE_READ }}" > .env
+
+          # Iniciar sesión en Docker Hub
+          sudo docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+          # Descargar la última imagen desde Docker Hub
+          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/projectawsstore-readprovider:latest
+
+          # Verificar si el contenedor ya existe y eliminarlo antes de correr uno nuevo
+          if [ $(sudo docker ps -aq -f name=read-provider) ]; then
+            echo "🛑 Deteniendo y eliminando el contenedor existente..."
+            sudo docker stop read-provider || true
+            sudo docker rm -f read-provider || true
+          fi
+
+          # Asegurar que el puerto 5003 no esté bloqueado
+          if sudo lsof -i :5003; then
+            echo "⚠️ El puerto 5003 está en uso. Liberándolo..."
+            sudo lsof -t -i :5003 | xargs sudo kill -9 || true
+          fi
+
+          # Ejecutar el nuevo contenedor con el archivo .env
+          echo "🚀 Iniciando nuevo contenedor read-provider..."
+          sudo docker run -d -p 4003:4003 -p 5003:5003 --env-file .env --name read-provider ${{ secrets.DOCKER_USERNAME }}/projectawsstore-readprovider
+
+          echo "✅ Despliegue completado exitosamente."
