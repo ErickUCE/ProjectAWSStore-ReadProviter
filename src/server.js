@@ -3,11 +3,20 @@ const path = require('path');
 const { ApolloServer } = require('apollo-server');
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors'); // ✅ Importar CORS
 const sequelize = require('./config/database');
 const resolvers = require('./graphql/resolvers');
 const providerRoutes = require('./routes/providerRoutes');
 
 const app = express();
+
+// 🔥 **Habilitar CORS**
+app.use(cors({
+    origin: "*",  // Permite todas las conexiones. ⚠️ Cambia esto si solo permites desde tu frontend
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 app.use(bodyParser.json());
 app.use(providerRoutes); // ✅ Registrar las rutas
 

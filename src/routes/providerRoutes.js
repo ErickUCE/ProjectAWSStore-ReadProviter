@@ -93,4 +93,17 @@ router.get('/providers/:id', async (req, res) => {
     }
 });
 
+
+//-------------------Get all providers to interfaz----------------------
+// ✅ Endpoint para obtener todos los proveedores
+router.get('/providers', async (req, res) => {
+    try {
+        const providers = await Provider.findAll();
+        res.json(providers);
+    } catch (error) {
+        console.error('❌ Error obteniendo proveedores:', error);
+        res.status(500).json({ error: 'Error en el servidor' });
+    }
+});
+
 module.exports = router;
