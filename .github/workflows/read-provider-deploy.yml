@@ -38,7 +38,7 @@ jobs:
           echo "✅ Iniciando despliegue en EC2..."
 
           # Crear el archivo .env desde el secreto de GitHub
-          echo "${{ secrets.ENV_FILE_READ }}" > .env
+          echo "${{ secrets.ENV_FILE_READ_PROVIDER }}" > .env
 
           # Iniciar sesión en Docker Hub
           sudo docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
